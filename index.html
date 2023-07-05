@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>DIGITAL GOVERNMENT SYSTEM</title>
+  <style>
+    #container {
+      display: flex;
+      align-items: flex-start;
+      margin-left: 50px;
+    }
+    #video {
+      width: 20%;
+      height: auto;
+      padding-top: 30px;
+    }
+
+    h1,h2{
+      text-align: center;
+    }
+    #output {
+      margin-top: 20px;
+      display: none;
+    }
+    form {
+      margin-top: 20px;
+      max-width: 300px;
+      padding-left: 50px;
+    }
+    input {
+      margin-bottom: 10px;
+      width: 100%;
+      padding: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    footer{
+      text-align: center;
+      margin: 2rem;
+      font-size: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h2>DIGITAL GOVERNMENT SYSTEM</h2>
+  <H1>CIVIL HOSPITAL BIAORA </H1>
+  <div id="container">
+  <video id="video" autoplay></video>
+  <div id="output"></div>
+
+  <form>
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name">
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email">
+
+    <label for="phone">Phone:</label>
+    <input type="tel" id="phone" name="phone">
+
+    
+
+    <label for="address">Address:</label>
+    <input type="text" id="address" name="address">
+
+    <button id="scanBtn">Scan QR Code</button>
+    <button id="printBtn">Print as PDF</button>
+  </form>
+</div>
+
+<footer>created by Arjun Sharma</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/vfs_fonts.js"></script>
+  <script>
+    function readQRCode() {
+      var video = document.getElementById('video');
+      var outputContainer = document.getElementById('output');
+      var canvas = document.createElement('canvas');
+      var context = canvas.getContext('2d');
+      var form = document.querySelector('form');
+      var qrCodeResult = document.createElement('p');
+
+      // Use getUserMedia API to access the webcam
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(function (stream) {
+          video.srcObject = stream;
+          video.setAttribute('playsinline', true);
+          video.play();
+          requestAnimationFrame(tick);
+        });
+
+       
+
+      function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          var code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code) {
+            qrCodeResult.textContent = 'QR Code data: ' + code.data;
+            outputContainer.appendChild(qrCodeResult);
+            video.pause();
+            video.src = "";
+            video.srcObject.getVideoTracks().forEach(track => track.stop());
+
+            // Autofill form fields
+            var qrData = JSON.parse(code.data);
+            form.name.value = qrData.name;
+            form.email.value = qrData.email;
+            form.phone.value = qrData.phone;
+            form.address.value = qrData.address;
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+    }
+
+    
+    
+    
+    
+    
+    function printAsPDF() {
+      var form = document.querySelector('form');
+      var currentDate = new Date().toLocaleString(); // Get current date and time
+      var docDefinition = {
+        header: 'CIVIL HOSPITAL BIAORA', // Set the header text
+        content: [
+        { text: 'CIVIL HOSPITAL BIAORA' , style: 'header' },
+           // Add current date and time below the header
+           { text: 'Date: ' + currentDate, style: 'date' },
+          { text: '----------------------------------------' },
+          { text: 'Receipt', style: 'receiptHeader' },
+          { text: '----------------------------------------' },
+          {
+            layout: 'Borders',
+            table: {
+              widths: ['auto', '*'],
+              body: [
+                [{ text: 'Name:', bold: true }, form.name.value],
+                
+                [{ text: 'Email:', bold: true }, form.email.value],
+                [{ text: 'Phone:', bold: true }, form.phone.value],
+                [{ text: 'Address:', bold: true }, form.address.value]
+              ]
+            }
+          },
+          { text: '----------------------------------------' },
+          { text: 'Thank you for choosing Civil Hospital Biaora!', style: 'thankYou' }
+        ],
+        styles: {
+          header: {
+            fontSize: 18,
+            bold: true,
+            alignment: 'center',
+            margin: [0, 14, 0, 10]
+          },
+
+          date:{
+            fontSize:12,
+          },
+          receiptHeader: {
+            fontSize: 16,
+            bold: true,
+            alignment: 'center',
+            margin: [0, 0, 0, 10]
+          },
+          thankYou: {
+            fontSize: 14,
+            italics: true,
+            alignment: 'center',
+            margin: [0, 10, 0, 0]
+          }
+        }
+      };
+      pdfMake.createPdf(docDefinition).print();
+    }
+    
+    
+    
+    
+    
+
+    var scanButton = document.getElementById('scanBtn');
+    scanButton.addEventListener('click', readQRCode);
+
+    var printButton = document.getElementById('printBtn');
+    printButton.addEventListener('click', printAsPDF);
+
+    window.addEventListener('DOMContentLoaded', readQRCode);
+  </script>
+</body>
+</html>
